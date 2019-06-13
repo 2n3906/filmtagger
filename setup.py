@@ -1,5 +1,5 @@
 """
-TA simple CLI to tag film scans with EXIF metadata.
+A simple CLI to tag film scans with EXIF metadata.
 """
 from setuptools import find_packages, setup
 
@@ -9,7 +9,7 @@ setup(
     name='filmtagger',
     version='0.0.1',
     url='https://github.com/2n3906/filmtagger',
-    license='BSD',
+    license='MIT',
     author='Scott Johnston',
     author_email='sjohnston@alum.mit.edu',
     description='TA simple CLI to tag film scans with EXIF metadata.',

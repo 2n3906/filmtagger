@@ -1,0 +1,6 @@
+click
+toml
+setuptools
+fuzzywuzzy
+python-Levenshtein # fuzzywuzzy
+python_dateutil
