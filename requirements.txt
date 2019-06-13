@@ -4,3 +4,5 @@ setuptools
 fuzzywuzzy
 python-Levenshtein # fuzzywuzzy
 python_dateutil
+xdg
+gi

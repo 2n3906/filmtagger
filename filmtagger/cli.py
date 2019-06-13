@@ -11,9 +11,22 @@ gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 
 import pkg_resources
+import xdg
 
+# Load system-wide camera & film definitions
 cameras = toml.load(pkg_resources.resource_filename(__name__, "cameras.toml"))
 films = toml.load(pkg_resources.resource_filename(__name__, "films.toml"))
+
+# Load user-provided camera & film definitions and merge
+# Config files should be stored in (UNIX) ~/.config/filmtagger/*.toml
+CAMERA_CONFIG_FILE = xdg.XDG_CONFIG_HOME / "filmtagger" / "cameras.toml"
+FILM_CONFIG_FILE = xdg.XDG_CONFIG_HOME / "filmtagger" / "films.toml"
+if Path(CAMERA_CONFIG_FILE).is_file():
+    user_cameras = toml.load(CAMERA_CONFIG_FILE)
+    cameras = {**cameras, **user_cameras}
+if Path(FILM_CONFIG_FILE).is_file():
+    user_films = toml.load(FILM_CONFIG_FILE)
+    films = {**cameras, **user_films}
 
 
 def validate_date(ctx, param, value):
@@ -57,7 +70,7 @@ def validate_film(ctx, param, value):
 @click.option('--film', '-f', help='Film name.', callback=validate_film)
 @click.argument('files', nargs=-1, type=click.Path(exists=True))
 def main(camera, date, film, files):
-    """Simple CLI to tag film scans with EXIF metadata."""
+    """Tag scanned images with film-specific EXIF metadata."""
     exif_datetime = date.strftime('%Y:%m:%d %H:%M:%S')
 
     click.echo('Set dates to:  {}'.format(date))
