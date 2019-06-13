@@ -26,8 +26,9 @@ autodetect a variety of date/time input.
 ## Configuration
 
 You may configure your own camera and film definitions to override the
-system-wide ones.  Create a `~/.config/filmtagger/cameras.toml` file that
-looks like this:
+system-wide ones.
+
+Create a `~/.config/filmtagger/cameras.toml` file that looks like this:
 
 ```toml
 ["Mamiya RB67"]
@@ -46,7 +47,7 @@ And a `~/.config/filmtagger/films.toml` like this:
 
 The section headings will be fuzzy-matched from the command-line 
 arguments.  The key-value pairs that follow will be set as metadata, 
-assuming they are [valid tag names](https://exiv2.org/metadata.html).  
+assuming they are [valid tag names](https://exiv2.org/metadata.html).
 In addition to the standard Exiv2 tag schema, [AnalogExif 
 tags](http://analogexif.sourceforge.net/help/analogexif-xmp.php) are 
 also supported.
