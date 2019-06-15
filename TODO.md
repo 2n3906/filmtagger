@@ -1,0 +1,2 @@
+- [ ] Support setting lab Xmp.AnalogExif.Lab
+- [ ] Support start/end frame number detection

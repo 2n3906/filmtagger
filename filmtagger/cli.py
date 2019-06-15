@@ -1,5 +1,5 @@
 import click
-
+import sys
 import toml
 from fuzzywuzzy import process
 from pathlib import Path
@@ -22,19 +22,30 @@ films = toml.load(pkg_resources.resource_filename(__name__, "films.toml"))
 CAMERA_CONFIG_FILE = xdg.XDG_CONFIG_HOME / "filmtagger" / "cameras.toml"
 FILM_CONFIG_FILE = xdg.XDG_CONFIG_HOME / "filmtagger" / "films.toml"
 if Path(CAMERA_CONFIG_FILE).is_file():
-    user_cameras = toml.load(CAMERA_CONFIG_FILE)
-    cameras = {**cameras, **user_cameras}
+    try:
+        user_cameras = toml.load(CAMERA_CONFIG_FILE)
+        cameras = {**cameras, **user_cameras}
+    except toml.decoder.TomlDecodeError:
+        print("File {} is not valid TOML.".format(CAMERA_CONFIG_FILE))
+        sys.exit(1)
 if Path(FILM_CONFIG_FILE).is_file():
-    user_films = toml.load(FILM_CONFIG_FILE)
-    films = {**cameras, **user_films}
+    try:
+        user_films = toml.load(FILM_CONFIG_FILE)
+        films = {**cameras, **user_films}
+    except toml.decoder.TomlDecodeError:
+        print("File {} is not valid TOML.".format(FILM_CONFIG_FILE))
+        sys.exit(1)
 
 
 def validate_date(ctx, param, value):
-    try:
-        date = parser.parse(value)
-        return date
-    except ValueError:
-        raise click.BadParameter('Could not parse date "{}"'.format(value))
+    if value is not None:
+        try:
+            date = parser.parse(value)
+            return date
+        except ValueError:
+            raise click.BadParameter('Could not parse date "{}"'.format(value))
+    else:
+        return value
 
 
 def validate_camera(ctx, param, value):
@@ -59,25 +70,24 @@ def validate_film(ctx, param, value):
         return value
 
 
-@click.command()
+@click.command(context_settings={'help_option_names':['-h','--help']})
+@click.option('--date', '-d', help='Date of image capture.', callback=validate_date)
 @click.option('--camera', '-c', help='Camera name.', callback=validate_camera)
-@click.option(
-    '--date',
-    '-d',
-    help='Date of image capture.',
-    callback=validate_date,
-    required=True)
 @click.option('--film', '-f', help='Film name.', callback=validate_film)
-@click.argument('files', nargs=-1, type=click.Path(exists=True))
-def main(camera, date, film, files):
+@click.option('--iso', '-i', help='ISO rating (overrides film definition)', type=click.INT)
+@click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
+def main(camera, date, film, iso, files):
     """Tag scanned images with film-specific EXIF metadata."""
-    exif_datetime = date.strftime('%Y:%m:%d %H:%M:%S')
 
-    click.echo('Set dates to:  {}'.format(date))
+    if date:
+        exif_datetime = date.strftime('%Y:%m:%d %H:%M:%S')
+        click.echo('Set dates to:  {}'.format(date))
     if camera:
         click.echo('Set camera to: {}'.format(camera))
     if film:
         click.echo('Set film to:   {}'.format(film))
+    if iso:
+        click.echo('Set ISO to:    {}'.format(iso))
 
     click.confirm('Does this look OK?', abort=True)
 
@@ -97,9 +107,10 @@ def main(camera, date, film, files):
             m.register_xmp_namespace("http://analogexif.sourceforge.net/ns",
                                      "AnalogExif")
             m.open_path(str(image))
-            m.set_tag_string('Exif.Image.DateTime', exif_datetime)
-            m.set_tag_string('Exif.Photo.DateTimeOriginal', exif_datetime)
-            m.set_tag_string('Exif.Photo.DateTimeDigitized', exif_datetime)
+            if date:
+                m.set_tag_string('Exif.Image.DateTime', exif_datetime)
+                m.set_tag_string('Exif.Photo.DateTimeOriginal', exif_datetime)
+                m.set_tag_string('Exif.Photo.DateTimeDigitized', exif_datetime)
             if camera:
                 if not camera in m.get_tag_multiple('Xmp.dc.subject'):
                     m.set_tag_string('Xmp.dc.subject',
@@ -118,5 +129,7 @@ def main(camera, date, film, files):
                         m.set_tag_long(k, v)
                     else:
                         m.set_tag_string(k, v)
+            if iso:
+                m.set_tag_long("Exif.Photo.ISOSpeedRatings", iso)
             m.save_file(str(image))
     click.echo("Done.")
