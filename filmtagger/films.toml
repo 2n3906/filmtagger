@@ -23,6 +23,11 @@
 "Xmp.AnalogExif.FilmMaker" = "Ilford"
 "Xmp.iptcExt.DigitalSourceType" = "http://cv.iptc.org/newscodes/digitalsourcetype/negativeFilm"
 
+["Ilford Delta 3200"]
+"Exif.Photo.ISOSpeedRatings" = 3200
+"Xmp.AnalogExif.FilmMaker" = "Ilford"
+"Xmp.iptcExt.DigitalSourceType" = "http://cv.iptc.org/newscodes/digitalsourcetype/negativeFilm"
+
 ["Ilford FP4 Plus"]
 "Exif.Photo.ISOSpeedRatings" = 125
 "Xmp.AnalogExif.FilmMaker" = "Ilford"
@@ -54,6 +59,11 @@
 "Xmp.iptcExt.DigitalSourceType" = "http://cv.iptc.org/newscodes/digitalsourcetype/negativeFilm"
 
 ["Kodak Portra 400"]
+"Exif.Photo.ISOSpeedRatings" = 400
+"Xmp.AnalogExif.FilmMaker" = "Kodak"
+"Xmp.iptcExt.DigitalSourceType" = "http://cv.iptc.org/newscodes/digitalsourcetype/negativeFilm"
+
+["Kodak Tri-X 400"]
 "Exif.Photo.ISOSpeedRatings" = 400
 "Xmp.AnalogExif.FilmMaker" = "Kodak"
 "Xmp.iptcExt.DigitalSourceType" = "http://cv.iptc.org/newscodes/digitalsourcetype/negativeFilm"
