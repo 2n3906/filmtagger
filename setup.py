@@ -3,8 +3,6 @@ A simple CLI to tag film scans with EXIF metadata.
 """
 from setuptools import find_packages, setup
 
-dependencies = ['click']
-
 setup(
     name='filmtagger',
     version='0.0.1',
@@ -18,7 +16,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=dependencies,
     entry_points={
         'console_scripts': [
             'filmtagger = filmtagger.cli:main',
@@ -42,7 +39,6 @@ setup(
         'Operating System :: Unix',
         'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ]
