@@ -9,7 +9,7 @@ date, camera, and film information for import into Lightroom (or equivalent).
 Install the package:
 
 ```
-python3 setup.py install
+pip install filmtagger
 ```
 
 ## Usage examples

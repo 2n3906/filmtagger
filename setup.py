@@ -1,21 +1,34 @@
 """
 A simple CLI to tag film scans with EXIF metadata.
 """
-from setuptools import find_packages, setup
+import setuptools
 
-setup(
-    name='filmtagger',
-    version='0.0.1',
-    url='https://github.com/2n3906/filmtagger',
-    license='MIT',
-    author='Scott Johnston',
-    author_email='sjohnston@alum.mit.edu',
-    description='TA simple CLI to tag film scans with EXIF metadata.',
-    long_description=__doc__,
-    packages=find_packages(exclude=['tests']),
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="filmtagger",
+    version="0.0.3",
+    url="https://github.com/2n3906/filmtagger",
+    license="MIT",
+    author="Scott Johnston",
+    author_email="sjohnston@alum.mit.edu",
+    description="A simple CLI to tag film scans with EXIF metadata.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    packages=setuptools.find_packages(),
     include_package_data=True,
     zip_safe=False,
     platforms='any',
+    install_requires=[
+        "click",
+        "toml",
+        "fuzzywuzzy",
+        "python-Levenshtein",
+        "python_dateutil",
+        "xdg",
+        "PyGObject",
+    ],
     entry_points={
         'console_scripts': [
             'filmtagger = filmtagger.cli:main',
@@ -32,14 +45,7 @@ setup(
         # 'Development Status :: 6 - Mature',
         # 'Development Status :: 7 - Inactive',
         'Environment :: Console',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: POSIX',
-        'Operating System :: MacOS',
-        'Operating System :: Unix',
-        'Operating System :: Microsoft :: Windows',
-        'Programming Language :: Python',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ]
-)
+    ])
