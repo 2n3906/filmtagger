@@ -1,5 +1,6 @@
 import click
 import sys
+import os
 import toml
 from fuzzywuzzy import process
 from pathlib import Path
@@ -11,16 +12,27 @@ gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 
 import pkg_resources
-import xdg
 
 # Load system-wide camera & film definitions
 cameras = toml.load(pkg_resources.resource_filename(__name__, "cameras.toml"))
 films = toml.load(pkg_resources.resource_filename(__name__, "films.toml"))
 
 # Load user-provided camera & film definitions and merge
-# Config files should be stored in (UNIX) ~/.config/filmtagger/*.toml
-CAMERA_CONFIG_FILE = xdg.XDG_CONFIG_HOME / "filmtagger" / "cameras.toml"
-FILM_CONFIG_FILE = xdg.XDG_CONFIG_HOME / "filmtagger" / "films.toml"
+# Config files should be stored in:
+#     (UNIX)  ~/.config/filmtagger/*.toml
+#     (Win32) C:\Users\username\AppData\Roaming\filmtagger\*.toml
+if sys.platform == "win32":
+    CAMERA_CONFIG_FILE = Path(
+        os.environ.get('APPDATA')) / "filmtagger" / "cameras.toml"
+    FILM_CONFIG_FILE = Path(
+        os.environ.get('APPDATA')) / "filmtagger" / "films.toml"
+else:
+    configpath = Path(os.environ.get('HOME')) / ".config"
+    if os.environ.get('XDG_CONFIG_HOME'):
+        configpath = Path(os.environ.get('XDG_CONFIG_HOME'))
+    CAMERA_CONFIG_FILE = configpath / "filmtagger" / "cameras.toml"
+    FILM_CONFIG_FILE = configpath / "filmtagger" / "films.toml"
+
 if Path(CAMERA_CONFIG_FILE).is_file():
     try:
         user_cameras = toml.load(CAMERA_CONFIG_FILE)
@@ -70,11 +82,16 @@ def validate_film(ctx, param, value):
         return value
 
 
-@click.command(context_settings={'help_option_names':['-h','--help']})
-@click.option('--date', '-d', help='Date of image capture.', callback=validate_date)
+@click.command(context_settings={'help_option_names': ['-h', '--help']})
+@click.option(
+    '--date', '-d', help='Date of image capture.', callback=validate_date)
 @click.option('--camera', '-c', help='Camera name.', callback=validate_camera)
 @click.option('--film', '-f', help='Film name.', callback=validate_film)
-@click.option('--iso', '-i', help='ISO rating (overrides film definition)', type=click.INT)
+@click.option(
+    '--iso',
+    '-i',
+    help='ISO rating (overrides film definition)',
+    type=click.INT)
 @click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
 def main(camera, date, film, iso, files):
     """Tag scanned images with film-specific EXIF metadata."""

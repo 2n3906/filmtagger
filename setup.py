@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="filmtagger",
-    version="0.0.3",
+    version="0.0.4",
     url="https://github.com/2n3906/filmtagger",
     license="MIT",
     author="Scott Johnston",
@@ -26,7 +26,6 @@ setuptools.setup(
         "fuzzywuzzy",
         "python-Levenshtein",
         "python_dateutil",
-        "xdg",
         "PyGObject",
     ],
     entry_points={
