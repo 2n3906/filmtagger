@@ -5,17 +5,18 @@ import toml
 from fuzzywuzzy import process
 from pathlib import Path
 from dateutil import parser
+import importlib.resources
 # import re
 
 import gi
 gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 
-import pkg_resources
-
 # Load system-wide camera & film definitions
-cameras = toml.load(pkg_resources.resource_filename(__name__, "cameras.toml"))
-films = toml.load(pkg_resources.resource_filename(__name__, "films.toml"))
+with importlib.resources.files("filmtagger").joinpath("cameras.toml").open("rb") as f:
+    cameras = toml.load(f)
+with importlib.resources.files("filmtagger").joinpath("films.toml").open("rb") as f:
+    films = toml.load(f)
 
 # Load user-provided camera & film definitions and merge
 # Config files should be stored in:
