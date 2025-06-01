@@ -1,3 +1,4 @@
+from .__about__ import __version__
 import importlib.resources
 import os
 import sys
@@ -86,7 +87,7 @@ def validate_film(ctx, param, value):
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option()
+@click.version_option(__version__, prog_name="filmtagger")
 @click.option(
     "--date", "-d", help="Date of image capture.", callback=validate_date)
 @click.option("--camera", "-c", help="Camera name.", callback=validate_camera)
