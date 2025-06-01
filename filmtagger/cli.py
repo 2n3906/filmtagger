@@ -13,9 +13,9 @@ gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 
 # Load system-wide camera & film definitions
-with importlib.resources.files("filmtagger").joinpath("cameras.toml").open("rb") as f:
+with importlib.resources.open_text(__name__, "cameras.toml") as f:
     cameras = toml.load(f)
-with importlib.resources.files("filmtagger").joinpath("films.toml").open("rb") as f:
+with importlib.resources.open_text(__name__, "films.toml") as f:
     films = toml.load(f)
 
 # Load user-provided camera & film definitions and merge
