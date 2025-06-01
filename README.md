@@ -1,16 +1,75 @@
-# Filmtagger
-> A simple CLI to tag film scans with EXIF metadata.
+# filmtagger
 
-A fuss-free way to take JPG files from film scanning and tag them with
-date, camera, and film information for import into Lightroom (or equivalent).
+A simple CLI to tag film scans with EXIF metadata.
 
 ## Installation
 
-Install the package:
-
-```
+```bash
 pip install filmtagger
 ```
+
+## Usage
+
+```bash
+# Show help
+filmtagger --help
+
+# Tag a single image
+filmtagger tag image.jpg
+
+# Tag multiple images
+filmtagger tag *.jpg
+```
+
+## Development
+
+This project uses [Hatch](https://hatch.pypa.io/) for development and package management.
+
+### Setup Development Environment
+
+1. Install Hatch:
+```bash
+pip install hatch
+```
+
+2. Create and activate development environment:
+```bash
+hatch shell
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+hatch run test
+
+# Run tests with coverage
+hatch run test-cov
+
+# Run linting checks
+hatch run lint:all
+
+# Format code
+hatch run lint:fmt
+```
+
+### Building and Publishing
+
+```bash
+# Build the package
+hatch build
+
+# Publish to PyPI
+hatch publish
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Usage examples
 

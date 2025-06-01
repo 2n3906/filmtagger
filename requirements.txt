@@ -1,6 +1,0 @@
-PyGObject
-click
-fuzzywuzzy
-python-Levenshtein # fuzzywuzzy
-python_dateutil
-toml

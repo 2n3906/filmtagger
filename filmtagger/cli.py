@@ -1,21 +1,25 @@
-import click
-import sys
+from .__about__ import __version__
+import importlib.resources
 import os
-import toml
-from fuzzywuzzy import process
+import sys
 from pathlib import Path
-from dateutil import parser
-# import re
 
+import click
+
+# import re
 import gi
-gi.require_version('GExiv2', '0.10')
+import toml
+from dateutil import parser
+from fuzzywuzzy import process
+
+gi.require_version("GExiv2", "0.10")
 from gi.repository import GExiv2
 
-import pkg_resources
-
 # Load system-wide camera & film definitions
-cameras = toml.load(pkg_resources.resource_filename(__name__, "cameras.toml"))
-films = toml.load(pkg_resources.resource_filename(__name__, "films.toml"))
+with importlib.resources.open_text(__name__, "cameras.toml") as f:
+    cameras = toml.load(f)
+with importlib.resources.open_text(__name__, "films.toml") as f:
+    films = toml.load(f)
 
 # Load user-provided camera & film definitions and merge
 # Config files should be stored in:
@@ -23,13 +27,13 @@ films = toml.load(pkg_resources.resource_filename(__name__, "films.toml"))
 #     (Win32) C:\Users\username\AppData\Roaming\filmtagger\*.toml
 if sys.platform == "win32":
     CAMERA_CONFIG_FILE = Path(
-        os.environ.get('APPDATA')) / "filmtagger" / "cameras.toml"
+        os.environ.get("APPDATA")) / "filmtagger" / "cameras.toml"
     FILM_CONFIG_FILE = Path(
-        os.environ.get('APPDATA')) / "filmtagger" / "films.toml"
+        os.environ.get("APPDATA")) / "filmtagger" / "films.toml"
 else:
-    configpath = Path(os.environ.get('HOME')) / ".config"
-    if os.environ.get('XDG_CONFIG_HOME'):
-        configpath = Path(os.environ.get('XDG_CONFIG_HOME'))
+    configpath = Path(os.environ.get("HOME")) / ".config"
+    if os.environ.get("XDG_CONFIG_HOME"):
+        configpath = Path(os.environ.get("XDG_CONFIG_HOME"))
     CAMERA_CONFIG_FILE = configpath / "filmtagger" / "cameras.toml"
     FILM_CONFIG_FILE = configpath / "filmtagger" / "films.toml"
 
@@ -38,14 +42,14 @@ if Path(CAMERA_CONFIG_FILE).is_file():
         user_cameras = toml.load(CAMERA_CONFIG_FILE)
         cameras = {**cameras, **user_cameras}
     except toml.decoder.TomlDecodeError:
-        print("File {} is not valid TOML.".format(CAMERA_CONFIG_FILE))
+        print(f"File {CAMERA_CONFIG_FILE} is not valid TOML.")
         sys.exit(1)
 if Path(FILM_CONFIG_FILE).is_file():
     try:
         user_films = toml.load(FILM_CONFIG_FILE)
         films = {**cameras, **user_films}
     except toml.decoder.TomlDecodeError:
-        print("File {} is not valid TOML.".format(FILM_CONFIG_FILE))
+        print(f"File {FILM_CONFIG_FILE} is not valid TOML.")
         sys.exit(1)
 
 
@@ -55,7 +59,7 @@ def validate_date(ctx, param, value):
             date = parser.parse(value)
             return date
         except ValueError:
-            raise click.BadParameter('Could not parse date "{}"'.format(value))
+            raise click.BadParameter("Could not parse date.")
     else:
         return value
 
@@ -66,7 +70,7 @@ def validate_camera(ctx, param, value):
         if match:
             return match[0]
         else:
-            raise click.BadParameter('Camera "{}" not found.'.format(value))
+            raise click.BadParameter("Camera not found in database.")
     else:
         return value
 
@@ -77,36 +81,37 @@ def validate_film(ctx, param, value):
         if match:
             return match[0]
         else:
-            raise click.BadParameter('Film "{}" not found.'.format(value))
+            raise click.BadParameter("Film not found in database.")
     else:
         return value
 
 
-@click.command(context_settings={'help_option_names': ['-h', '--help']})
+@click.command(context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(__version__, prog_name="filmtagger")
 @click.option(
-    '--date', '-d', help='Date of image capture.', callback=validate_date)
-@click.option('--camera', '-c', help='Camera name.', callback=validate_camera)
-@click.option('--film', '-f', help='Film name.', callback=validate_film)
+    "--date", "-d", help="Date of image capture.", callback=validate_date)
+@click.option("--camera", "-c", help="Camera name.", callback=validate_camera)
+@click.option("--film", "-f", help="Film name.", callback=validate_film)
 @click.option(
-    '--iso',
-    '-i',
-    help='ISO rating (overrides film definition)',
+    "--iso",
+    "-i",
+    help="ISO rating (overrides film definition)",
     type=click.INT)
-@click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
+@click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
 def main(camera, date, film, iso, files):
     """Tag scanned images with film-specific EXIF metadata."""
 
     if date:
-        exif_datetime = date.strftime('%Y:%m:%d %H:%M:%S')
-        click.echo('Set dates to:  {}'.format(date))
+        exif_datetime = date.strftime("%Y:%m:%d %H:%M:%S")
+        click.echo(f"Set dates to:  {date}")
     if camera:
-        click.echo('Set camera to: {}'.format(camera))
+        click.echo(f"Set camera to: {camera}")
     if film:
-        click.echo('Set film to:   {}'.format(film))
+        click.echo(f"Set film to:   {film}")
     if iso:
-        click.echo('Set ISO to:    {}'.format(iso))
+        click.echo(f"Set ISO to:    {iso}")
 
-    click.confirm('Does this look OK?', abort=True)
+    click.confirm("Does this look OK?", abort=True)
 
     workqueue = []
     for f in files:
@@ -117,7 +122,7 @@ def main(camera, date, film, iso, files):
             workqueue.append(p)
 
     with click.progressbar(
-            workqueue, label='Tagging images...', show_pos=True) as bar:
+            workqueue, label="Tagging images...", show_pos=True) as bar:
         for image in bar:
             # Write new metadata to image.
             m = GExiv2.Metadata()
@@ -125,12 +130,12 @@ def main(camera, date, film, iso, files):
                                      "AnalogExif")
             m.open_path(str(image))
             if date:
-                m.set_tag_string('Exif.Image.DateTime', exif_datetime)
-                m.set_tag_string('Exif.Photo.DateTimeOriginal', exif_datetime)
-                m.set_tag_string('Exif.Photo.DateTimeDigitized', exif_datetime)
+                m.set_tag_string("Exif.Image.DateTime", exif_datetime)
+                m.set_tag_string("Exif.Photo.DateTimeOriginal", exif_datetime)
+                m.set_tag_string("Exif.Photo.DateTimeDigitized", exif_datetime)
             if camera:
-                if not camera in m.get_tag_multiple('Xmp.dc.subject'):
-                    m.set_tag_string('Xmp.dc.subject',
+                if camera not in m.get_tag_multiple("Xmp.dc.subject"):
+                    m.set_tag_string("Xmp.dc.subject",
                                      camera)  # set a keyword!
                 for k, v in cameras[camera].items():
                     if isinstance(v, int):
@@ -138,9 +143,9 @@ def main(camera, date, film, iso, files):
                     else:
                         m.set_tag_string(k, v)
             if film:
-                if not film in m.get_tag_multiple('Xmp.dc.subject'):
-                    m.set_tag_string('Xmp.dc.subject', film)  # set a keyword!
-                m.set_tag_string('Xmp.AnalogExif.Film', film)
+                if film not in m.get_tag_multiple("Xmp.dc.subject"):
+                    m.set_tag_string("Xmp.dc.subject", film)  # set a keyword!
+                m.set_tag_string("Xmp.AnalogExif.Film", film)
                 for k, v in films[film].items():
                     if isinstance(v, int):
                         m.set_tag_long(k, v)
