@@ -8,7 +8,7 @@ import click
 
 # import re
 import gi
-import toml
+import tomli
 from dateutil import parser
 from fuzzywuzzy import process
 
@@ -16,20 +16,18 @@ gi.require_version("GExiv2", "0.10")
 from gi.repository import GExiv2
 
 # Load system-wide camera & film definitions
-with importlib.resources.open_text(__name__, "cameras.toml") as f:
-    cameras = toml.load(f)
-with importlib.resources.open_text(__name__, "films.toml") as f:
-    films = toml.load(f)
+with importlib.resources.open_binary(__name__, "cameras.toml") as f:
+    cameras = tomli.load(f)
+with importlib.resources.open_binary(__name__, "films.toml") as f:
+    films = tomli.load(f)
 
 # Load user-provided camera & film definitions and merge
 # Config files should be stored in:
 #     (UNIX)  ~/.config/filmtagger/*.toml
 #     (Win32) C:\Users\username\AppData\Roaming\filmtagger\*.toml
 if sys.platform == "win32":
-    CAMERA_CONFIG_FILE = Path(
-        os.environ.get("APPDATA")) / "filmtagger" / "cameras.toml"
-    FILM_CONFIG_FILE = Path(
-        os.environ.get("APPDATA")) / "filmtagger" / "films.toml"
+    CAMERA_CONFIG_FILE = Path(os.environ.get("APPDATA")) / "filmtagger" / "cameras.toml"
+    FILM_CONFIG_FILE = Path(os.environ.get("APPDATA")) / "filmtagger" / "films.toml"
 else:
     configpath = Path(os.environ.get("HOME")) / ".config"
     if os.environ.get("XDG_CONFIG_HOME"):
@@ -39,16 +37,18 @@ else:
 
 if Path(CAMERA_CONFIG_FILE).is_file():
     try:
-        user_cameras = toml.load(CAMERA_CONFIG_FILE)
+        with open(CAMERA_CONFIG_FILE, "rb") as f:
+            user_cameras = tomli.load(f)
         cameras = {**cameras, **user_cameras}
-    except toml.decoder.TomlDecodeError:
+    except tomli.TOMLDecodeError:
         print(f"File {CAMERA_CONFIG_FILE} is not valid TOML.")
         sys.exit(1)
 if Path(FILM_CONFIG_FILE).is_file():
     try:
-        user_films = toml.load(FILM_CONFIG_FILE)
+        with open(FILM_CONFIG_FILE, "rb") as f:
+            user_films = tomli.load(f)
         films = {**cameras, **user_films}
-    except toml.decoder.TomlDecodeError:
+    except tomli.TOMLDecodeError:
         print(f"File {FILM_CONFIG_FILE} is not valid TOML.")
         sys.exit(1)
 
@@ -88,15 +88,10 @@ def validate_film(ctx, param, value):
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__, prog_name="filmtagger")
-@click.option(
-    "--date", "-d", help="Date of image capture.", callback=validate_date)
+@click.option("--date", "-d", help="Date of image capture.", callback=validate_date)
 @click.option("--camera", "-c", help="Camera name.", callback=validate_camera)
 @click.option("--film", "-f", help="Film name.", callback=validate_film)
-@click.option(
-    "--iso",
-    "-i",
-    help="ISO rating (overrides film definition)",
-    type=click.INT)
+@click.option("--iso", "-i", help="ISO rating (overrides film definition)", type=click.INT)
 @click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
 def main(camera, date, film, iso, files):
     """Tag scanned images with film-specific EXIF metadata."""
@@ -121,13 +116,11 @@ def main(camera, date, film, iso, files):
         elif p.exists() and p.is_file():
             workqueue.append(p)
 
-    with click.progressbar(
-            workqueue, label="Tagging images...", show_pos=True) as bar:
+    with click.progressbar(workqueue, label="Tagging images...", show_pos=True) as bar:
         for image in bar:
             # Write new metadata to image.
             m = GExiv2.Metadata()
-            m.register_xmp_namespace("http://analogexif.sourceforge.net/ns",
-                                     "AnalogExif")
+            m.register_xmp_namespace("http://analogexif.sourceforge.net/ns", "AnalogExif")
             m.open_path(str(image))
             if date:
                 m.set_tag_string("Exif.Image.DateTime", exif_datetime)
@@ -135,8 +128,7 @@ def main(camera, date, film, iso, files):
                 m.set_tag_string("Exif.Photo.DateTimeDigitized", exif_datetime)
             if camera:
                 if camera not in m.get_tag_multiple("Xmp.dc.subject"):
-                    m.set_tag_string("Xmp.dc.subject",
-                                     camera)  # set a keyword!
+                    m.set_tag_string("Xmp.dc.subject", camera)  # set a keyword!
                 for k, v in cameras[camera].items():
                     if isinstance(v, int):
                         m.set_tag_long(k, v)
