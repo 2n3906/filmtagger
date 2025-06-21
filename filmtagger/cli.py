@@ -7,13 +7,10 @@ from pathlib import Path
 import click
 
 # import re
-import gi
+import pyexiv2
 import tomli
 from dateutil import parser
 from fuzzywuzzy import process
-
-gi.require_version("GExiv2", "0.10")
-from gi.repository import GExiv2
 
 # Load system-wide camera & film definitions
 with importlib.resources.open_binary(__name__, "cameras.toml") as f:
@@ -119,31 +116,67 @@ def main(camera, date, film, iso, files):
     with click.progressbar(workqueue, label="Tagging images...", show_pos=True) as bar:
         for image in bar:
             # Write new metadata to image.
-            m = GExiv2.Metadata()
-            m.register_xmp_namespace("http://analogexif.sourceforge.net/ns", "AnalogExif")
-            m.open_path(str(image))
-            if date:
-                m.set_tag_string("Exif.Image.DateTime", exif_datetime)
-                m.set_tag_string("Exif.Photo.DateTimeOriginal", exif_datetime)
-                m.set_tag_string("Exif.Photo.DateTimeDigitized", exif_datetime)
-            if camera:
-                if camera not in m.get_tag_multiple("Xmp.dc.subject"):
-                    m.set_tag_string("Xmp.dc.subject", camera)  # set a keyword!
-                for k, v in cameras[camera].items():
-                    if isinstance(v, int):
-                        m.set_tag_long(k, v)
-                    else:
-                        m.set_tag_string(k, v)
-            if film:
-                if film not in m.get_tag_multiple("Xmp.dc.subject"):
-                    m.set_tag_string("Xmp.dc.subject", film)  # set a keyword!
-                m.set_tag_string("Xmp.AnalogExif.Film", film)
-                for k, v in films[film].items():
-                    if isinstance(v, int):
-                        m.set_tag_long(k, v)
-                    else:
-                        m.set_tag_string(k, v)
-            if iso:
-                m.set_tag_long("Exif.Photo.ISOSpeedRatings", iso)
-            m.save_file(str(image))
+            with pyexiv2.Image(str(image)) as img:
+                # Prepare metadata dictionaries
+                exif_data = {}
+                xmp_data = {}
+                
+                # Get existing XMP data once to handle keywords properly
+                try:
+                    existing_xmp = img.read_xmp()
+                except Exception:
+                    existing_xmp = {}
+                
+                # Handle keywords/subjects
+                existing_subjects = []
+                if "Xmp.dc.subject" in existing_xmp:
+                    subject_value = existing_xmp["Xmp.dc.subject"]
+                    if isinstance(subject_value, str):
+                        existing_subjects = [s.strip() for s in subject_value.split(";") if s.strip()]
+                    elif isinstance(subject_value, list):
+                        existing_subjects = [str(s).strip() for s in subject_value if str(s).strip()]
+                
+                # Add new subjects
+                new_subjects = existing_subjects.copy()
+                if camera and camera not in new_subjects:
+                    new_subjects.append(camera)
+                if film and film not in new_subjects:
+                    new_subjects.append(film)
+                
+                # Set date metadata
+                if date:
+                    exif_data["Exif.Image.DateTime"] = exif_datetime
+                    exif_data["Exif.Photo.DateTimeOriginal"] = exif_datetime
+                    exif_data["Exif.Photo.DateTimeDigitized"] = exif_datetime
+                
+                # Set camera metadata
+                if camera:
+                    for k, v in cameras[camera].items():
+                        if k.startswith("Exif."):
+                            exif_data[k] = str(v)
+                        elif k.startswith("Xmp."):
+                            xmp_data[k] = str(v)
+                
+                # Set film metadata
+                if film:
+                    xmp_data["Xmp.AnalogExif.Film"] = film
+                    for k, v in films[film].items():
+                        if k.startswith("Exif."):
+                            exif_data[k] = str(v)
+                        elif k.startswith("Xmp."):
+                            xmp_data[k] = str(v)
+                
+                # Set ISO metadata
+                if iso:
+                    exif_data["Exif.Photo.ISOSpeedRatings"] = str(iso)
+                
+                # Set subjects/keywords
+                if new_subjects != existing_subjects:
+                    xmp_data["Xmp.dc.subject"] = ";".join(new_subjects)
+                
+                # Apply metadata changes
+                if exif_data:
+                    img.modify_exif(exif_data)
+                if xmp_data:
+                    img.modify_xmp(xmp_data)
     click.echo("Done.")

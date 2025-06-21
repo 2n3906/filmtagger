@@ -28,3 +28,11 @@ def test_toml_files_load():
         films = tomli.load(f)
     assert isinstance(films, dict)
     assert len(films) > 0
+
+
+def test_pyexiv2_import():
+    """Test that pyexiv2 can be imported successfully."""
+    import pyexiv2
+    # Basic test to ensure the module is available
+    assert hasattr(pyexiv2, 'Image')
+    assert hasattr(pyexiv2, '__version__')

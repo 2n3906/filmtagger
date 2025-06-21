@@ -8,6 +8,10 @@ A simple CLI to tag film scans with EXIF metadata.
 pip install filmtagger
 ```
 
+### Requirements
+
+This package uses the [pyexiv2](https://pypi.org/project/pyexiv2/) library for EXIF/XMP metadata manipulation, which provides Python bindings for the Exiv2 library. The pyexiv2 package includes pre-compiled binaries for most platforms, making installation straightforward without requiring system-level dependencies.
+
 ## Usage
 
 ```bash

@@ -31,7 +31,7 @@ dependencies = [
     "fuzzywuzzy>=0.18.0",
     "python-Levenshtein>=0.21.0",
     "python-dateutil>=2.8.0",
-    "PyGObject>=3.42.0",
+    "pyexiv2>=2.8.0",
     "importlib-resources>=5.0.0; python_version < '3.9'",  # For Python 3.8 compatibility
 ]
 
