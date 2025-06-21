@@ -117,6 +117,9 @@ def main(camera, date, film, iso, files):
         for image in bar:
             # Write new metadata to image.
             with pyexiv2.Image(str(image)) as img:
+                # Register the AnalogExif XMP namespace
+                pyexiv2.registerNs("http://analogexif.sourceforge.net/ns/", "AnalogExif")
+                
                 # Prepare metadata dictionaries
                 exif_data = {}
                 xmp_data = {}
