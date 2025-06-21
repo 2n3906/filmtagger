@@ -12,6 +12,9 @@ import tomli
 from dateutil import parser
 from fuzzywuzzy import process
 
+# Register the AnalogExif XMP namespace globally
+pyexiv2.registerNs("http://analogexif.sourceforge.net/ns/", "AnalogExif")
+
 # Load system-wide camera & film definitions
 with importlib.resources.open_binary(__name__, "cameras.toml") as f:
     cameras = tomli.load(f)
@@ -117,9 +120,6 @@ def main(camera, date, film, iso, files):
         for image in bar:
             # Write new metadata to image.
             with pyexiv2.Image(str(image)) as img:
-                # Register the AnalogExif XMP namespace
-                pyexiv2.registerNs("http://analogexif.sourceforge.net/ns/", "AnalogExif")
-                
                 # Prepare metadata dictionaries
                 exif_data = {}
                 xmp_data = {}
