@@ -40,8 +40,5 @@ ENV/
 htmlcov/
 .tox/
 
-# Hatch
-.hatch/
-
 # macOS
 .DS_Store

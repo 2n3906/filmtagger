@@ -5,6 +5,12 @@ A simple CLI to tag film scans with EXIF metadata.
 ## Installation
 
 ```bash
+pipx install filmtagger
+```
+
+Or with pip:
+
+```bash
 pip install filmtagger
 ```
 
@@ -27,44 +33,59 @@ filmtagger tag *.jpg
 
 ## Development
 
-This project uses [Hatch](https://hatch.pypa.io/) for development and package management.
+This project uses [uv](https://docs.astral.sh/uv/) for development and package management.
 
 ### Setup Development Environment
 
-1. Install Hatch:
+1. Install uv:
 ```bash
-pip install hatch
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-2. Create and activate development environment:
+2. Sync the project (creates the virtual environment with all dependencies):
 ```bash
-hatch shell
+uv sync
+```
+
+3. Activate the development environment (optional; `uv run` works without it):
+```bash
+source .venv/bin/activate
 ```
 
 ### Running Tests
 
 ```bash
 # Run all tests
-hatch run test
+uv run pytest
 
 # Run tests with coverage
-hatch run test-cov
+uv run pytest --cov-report=term-missing --cov=filmtagger tests
+```
 
-# Run linting checks
-hatch run lint:all
+### Linting and Formatting
+
+```bash
+# Run linter
+uv run ruff check .
+
+# Check formatting
+uv run ruff format --check .
 
 # Format code
-hatch run lint:fmt
+uv run ruff format . && uv run ruff check --fix .
 ```
 
 ### Building and Publishing
 
 ```bash
-# Build the package
-hatch build
+# Build the package (sdist + wheel into dist/)
+uv build
+
+# Bump the version (keeps pyproject.toml in sync)
+uv version --bump patch
 
 # Publish to PyPI
-hatch publish
+uv publish
 ```
 
 ## License
@@ -77,13 +98,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Usage examples
 
-To set the date of all images to 12 June 2019, specifying camera and 
+To set the date of all images to 12 June 2019, specifying camera and
 film as well:
 
     $ filmtagger -d 2019-06-12 -c "Leica M6" -f "E100G" *.jpg
 
-Filmtagger supports fuzzy-matching against its database of cameras and 
-films, so your input strings needn't be exact.  Likewise, it attempts to 
+Filmtagger supports fuzzy-matching against its database of cameras and
+films, so your input strings needn't be exact.  Likewise, it attempts to
 autodetect a variety of date/time input.
 
 ## Configuration
@@ -108,9 +129,9 @@ And a `~/.config/filmtagger/films.toml` like this:
 "Xmp.iptcExt.DigitalSourceType" = "http://cv.iptc.org/newscodes/digitalsourcetype/negativeFilm"
 ```
 
-The section headings will be fuzzy-matched from the command-line 
-arguments.  The key-value pairs that follow will be set as metadata, 
+The section headings will be fuzzy-matched from the command-line
+arguments.  The key-value pairs that follow will be set as metadata,
 assuming they are [valid tag names](https://exiv2.org/metadata.html).
-In addition to the standard Exiv2 tag schema, [AnalogExif 
-tags](http://analogexif.sourceforge.net/help/analogexif-xmp.php) are 
+In addition to the standard Exiv2 tag schema, [AnalogExif
+tags](http://analogexif.sourceforge.net/help/analogexif-xmp.php) are
 also supported.
