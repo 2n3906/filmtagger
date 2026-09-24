@@ -1,11 +1,11 @@
 import os
 import sys
+import tomllib
 from importlib.resources import files
 from pathlib import Path
 
 import click
 import pyexiv2
-import tomli
 from dateutil import parser
 from rapidfuzz import process
 
@@ -13,10 +13,10 @@ from rapidfuzz import process
 pyexiv2.registerNs('http://analogexif.sourceforge.net/ns/', 'AnalogExif')
 
 # Load system-wide camera & film definitions
-with files(__name__).joinpath('cameras.toml').open('rb') as f:
-    cameras = tomli.load(f)
-with files(__name__).joinpath('films.toml').open('rb') as f:
-    films = tomli.load(f)
+with files(__package__).joinpath('cameras.toml').open('rb') as f:
+    cameras = tomllib.load(f)
+with files(__package__).joinpath('films.toml').open('rb') as f:
+    films = tomllib.load(f)
 
 # Load user-provided camera & film definitions and merge
 # Config files should be stored in:
@@ -35,17 +35,17 @@ else:
 if Path(CAMERA_CONFIG_FILE).is_file():
     try:
         with open(CAMERA_CONFIG_FILE, 'rb') as f:
-            user_cameras = tomli.load(f)
+            user_cameras = tomllib.load(f)
         cameras = {**cameras, **user_cameras}
-    except tomli.TOMLDecodeError:
+    except tomllib.TOMLDecodeError:
         click.echo(f'File {CAMERA_CONFIG_FILE} is not valid TOML.', err=True)
         sys.exit(1)
 if Path(FILM_CONFIG_FILE).is_file():
     try:
         with open(FILM_CONFIG_FILE, 'rb') as f:
-            user_films = tomli.load(f)
+            user_films = tomllib.load(f)
         films = {**cameras, **user_films}
-    except tomli.TOMLDecodeError:
+    except tomllib.TOMLDecodeError:
         click.echo(f'File {FILM_CONFIG_FILE} is not valid TOML.', err=True)
         sys.exit(1)
 
