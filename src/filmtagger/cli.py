@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 import pyexiv2
 from dateutil import parser
-from rapidfuzz import process, fuzz, utils
+from rapidfuzz import fuzz, process, utils
 
 # Register the AnalogExif XMP namespace globally
 pyexiv2.registerNs('http://analogexif.sourceforge.net/ns/', 'AnalogExif')
