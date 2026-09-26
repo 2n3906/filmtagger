@@ -62,7 +62,13 @@ def validate_date(_ctx, _param, value):
 
 def validate_camera(_ctx, _param, value):
     if value is not None:
-        match = process.extractOne(value, cameras.keys(), scorer=fuzz.partial_ratio, processor=utils.default_process, score_cutoff=85)
+        match = process.extractOne(
+            value,
+            cameras.keys(),
+            scorer=fuzz.partial_ratio,
+            processor=utils.default_process,
+            score_cutoff=85,
+        )
         if match:
             return match[0]
         msg = 'Camera not found in database.'
@@ -72,7 +78,13 @@ def validate_camera(_ctx, _param, value):
 
 def validate_film(_ctx, _param, value):
     if value is not None:
-        match = process.extractOne(value, films.keys(), scorer=fuzz.partial_ratio, processor=utils.default_process, score_cutoff=85)
+        match = process.extractOne(
+            value,
+            films.keys(),
+            scorer=fuzz.partial_ratio,
+            processor=utils.default_process,
+            score_cutoff=85,
+        )
         if match:
             return match[0]
         msg = 'Film not found in database.'
@@ -109,9 +121,13 @@ def tag_image(image, camera, film, date, iso, exif_datetime):
         if 'Xmp.dc.subject' in existing_xmp:
             subject_value = existing_xmp['Xmp.dc.subject']
             if isinstance(subject_value, str):
-                existing_subjects = [s.strip() for s in subject_value.split(';') if s.strip()]
+                existing_subjects = [
+                    s.strip() for s in subject_value.split(';') if s.strip()
+                ]
             elif isinstance(subject_value, list):
-                existing_subjects = [str(s).strip() for s in subject_value if str(s).strip()]
+                existing_subjects = [
+                    str(s).strip() for s in subject_value if str(s).strip()
+                ]
 
         # Add new subjects
         new_subjects = existing_subjects.copy()
@@ -163,7 +179,9 @@ def tag_image(image, camera, film, date, iso, exif_datetime):
 @click.option('--date', '-d', help='Date of image capture.', callback=validate_date)
 @click.option('--camera', '-c', help='Camera name.', callback=validate_camera)
 @click.option('--film', '-f', help='Film name.', callback=validate_film)
-@click.option('--iso', '-i', help='ISO rating (overrides film definition)', type=click.INT)
+@click.option(
+    '--iso', '-i', help='ISO rating (overrides film definition)', type=click.INT
+)
 @click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
 def main(camera, date, film, iso, files):
     """Tag scanned images with film-specific EXIF metadata."""

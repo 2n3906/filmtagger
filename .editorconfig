@@ -1,0 +1,29 @@
+# Top-level EditorConfig file
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Python files — match Black's standard settings
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 88   # Black's default line length
+# Black handles formatting itself; this primarily helps editors/linting tools.
+
+# Markdown files — similar restrictions, but avoid overly aggressive line wrapping
+[*.md]
+indent_style = space
+indent_size = 2
+max_line_length = 88
+trim_trailing_whitespace = false   # Important: avoid breaking Markdown line breaks
+
+# YAML files (optional, but commonly used in Python projects)
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+max_line_length = 88
