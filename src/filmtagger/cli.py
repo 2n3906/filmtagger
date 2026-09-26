@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 import pyexiv2
 from dateutil import parser
-from rapidfuzz import process
+from rapidfuzz import process, fuzz, utils
 
 # Register the AnalogExif XMP namespace globally
 pyexiv2.registerNs('http://analogexif.sourceforge.net/ns/', 'AnalogExif')
@@ -44,7 +44,7 @@ if Path(FILM_CONFIG_FILE).is_file():
     try:
         with open(FILM_CONFIG_FILE, 'rb') as f:
             user_films = tomllib.load(f)
-        films = {**cameras, **user_films}
+        films = {**films, **user_films}
     except tomllib.TOMLDecodeError:
         click.echo(f'File {FILM_CONFIG_FILE} is not valid TOML.', err=True)
         sys.exit(1)
@@ -62,7 +62,7 @@ def validate_date(_ctx, _param, value):
 
 def validate_camera(_ctx, _param, value):
     if value is not None:
-        match = process.extractOne(value, cameras.keys(), score_cutoff=80)
+        match = process.extractOne(value, cameras.keys(), scorer=fuzz.partial_ratio, processor=utils.default_process, score_cutoff=85)
         if match:
             return match[0]
         msg = 'Camera not found in database.'
@@ -72,7 +72,7 @@ def validate_camera(_ctx, _param, value):
 
 def validate_film(_ctx, _param, value):
     if value is not None:
-        match = process.extractOne(value, films.keys(), score_cutoff=80)
+        match = process.extractOne(value, films.keys(), scorer=fuzz.partial_ratio, processor=utils.default_process, score_cutoff=85)
         if match:
             return match[0]
         msg = 'Film not found in database.'
