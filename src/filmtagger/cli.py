@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 import pyexiv2
 from dateutil import parser
-from rapidfuzz import fuzz, process, utils
+from rapidfuzz import fuzz, utils
 
 # Register the AnalogExif XMP namespace globally
 pyexiv2.registerNs('http://analogexif.sourceforge.net/ns/', 'AnalogExif')
@@ -50,6 +50,63 @@ if Path(FILM_CONFIG_FILE).is_file():
         sys.exit(1)
 
 
+# Fuzzy-match tuning. The cutoff is deliberately strict: a wrong match writes
+# the wrong camera or film into every tagged image, so rejecting a query and
+# letting the user retry is safer than guessing.
+SCORE_CUTOFF = 90
+MIN_QUERY_CHARS = 2
+
+
+def _normalise(value):
+    """Lowercase, turn punctuation into spaces, and collapse whitespace."""
+    return utils.default_process(value)
+
+
+def _squash(value):
+    """Normalise and drop spaces, so 'LeicaM6' and 'Leica M6' compare equal."""
+    return _normalise(value).replace(' ', '')
+
+
+def _numeric_tokens(value):
+    """The bare numbers in an already-normalised name, e.g. {'400'}."""
+    return {word for word in value.split() if word.isdigit()}
+
+
+def _match_score(query, key):
+    """Score how well a user-supplied value identifies a database key."""
+    normalised_query = _normalise(query)
+    normalised_key = _normalise(key)
+    squashed_query, squashed_key = _squash(query), _squash(key)
+    query_words = set(normalised_query.split())
+    key_words = set(normalised_key.split())
+
+    if normalised_query == normalised_key or squashed_query == squashed_key:
+        return 100.0
+    # Accept abbreviations ('M6', 'acros') and trailing extras ('M6 TTL meter').
+    if query_words <= key_words or key_words <= query_words:
+        return 95.0
+    # The words genuinely differ from here on, so only a near-identical spelling
+    # will do. A differing number always disqualifies the match, because
+    # 'Nikon F200' must not become 'Nikon F100' and 'Portra 440' must not
+    # become 'Portra 400'.
+    if not _numeric_tokens(normalised_query) <= key_words:
+        return 0.0
+    score = fuzz.ratio(squashed_query, squashed_key)
+    return score if score >= SCORE_CUTOFF else 0.0
+
+
+def _fuzzy_lookup(value, database):
+    """Find the database key a value refers to, or None if it is unclear."""
+    if len(_squash(value)) < MIN_QUERY_CHARS:
+        return None
+    scored = [(_match_score(value, key), key) for key in database]
+    best = max((score for score, _ in scored), default=0.0)
+    winners = [key for score, key in scored if score == best]
+    # A tie means the value is too vague to choose between, such as
+    # 'ilford delta' against a database holding Delta 100, 400 and 3200.
+    return winners[0] if best > 0.0 and len(winners) == 1 else None
+
+
 def validate_date(_ctx, _param, value):
     if value is not None:
         try:
@@ -62,15 +119,9 @@ def validate_date(_ctx, _param, value):
 
 def validate_camera(_ctx, _param, value):
     if value is not None:
-        match = process.extractOne(
-            value,
-            cameras.keys(),
-            scorer=fuzz.partial_ratio,
-            processor=utils.default_process,
-            score_cutoff=85,
-        )
+        match = _fuzzy_lookup(value, cameras)
         if match:
-            return match[0]
+            return match
         msg = 'Camera not found in database.'
         raise click.BadParameter(msg)
     return value
@@ -78,15 +129,9 @@ def validate_camera(_ctx, _param, value):
 
 def validate_film(_ctx, _param, value):
     if value is not None:
-        match = process.extractOne(
-            value,
-            films.keys(),
-            scorer=fuzz.partial_ratio,
-            processor=utils.default_process,
-            score_cutoff=85,
-        )
+        match = _fuzzy_lookup(value, films)
         if match:
-            return match[0]
+            return match
         msg = 'Film not found in database.'
         raise click.BadParameter(msg)
     return value
